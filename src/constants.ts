@@ -51,7 +51,7 @@ export const CHARACTERS: NPC[] = [
   {
     id: 3,
     name: "김인플",
-    trait: "SNS 생중계형. 모든 상황을 촬영하며 구독자 앞에서 공무원을 압박함.",
+    trait: "SNS 생중계형. 모든 상황을 촬영하며 구독자 앞에서 주무관을 압박함.",
     issue: "민원실 조명이 셀카 찍기에 부적합하다며 조명 교체 요구",
     bg: "counter",
     avatar: "🤳",

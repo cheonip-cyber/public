@@ -86,10 +86,10 @@ export default function App() {
           role: "user",
           parts: [{
             text: `너는 민원 해결 시뮬레이션 게임의 NPC '${currentNPC.name}'이야.
-너는 민원을 제기하러 온 '민원인'이고 사용자는 '공무원'이야. 절대 공무원처럼 말하지 마.
+너는 민원을 제기하러 온 '민원인'이고 사용자는 '주무관'이야. 절대 주무관인 척하지 마.
 특징: ${currentNPC.trait}
 민원 내용: ${currentNPC.issue}
-신입 공무원에게 첫 대사를 시작하고, 공무원이 선택할 수 있는 4가지 행동 카드를 제안해줘.
+신입 주무관에게 첫 대사를 시작하고, 주무관이 선택할 수 있는 4가지 행동 카드를 제안해줘.
 
 반드시 아래 JSON 형식으로만 응답해:
 {
@@ -158,10 +158,10 @@ export default function App() {
           role: "user",
           parts: [{
             text: `너는 민원 해결 시뮬레이션 게임의 NPC '${currentNPC.name}'이야.
-너는 '민원인', 사용자는 '공무원'이야.
+너는 '민원인', 사용자는 '주무관'이야.
 특징: ${currentNPC.trait}
 민원: ${currentNPC.issue}
-공무원이 '${card.label}' 행동을 했어. 리액션 대사와 다음 4가지 행동 카드를 제안해줘.
+주무관이 '${card.label}' 행동을 했어. 리액션 대사와 다음 4가지 행동 카드를 제안해줘.
 민원인의 속마음 피드백도 한 문장으로 작성해줘. 이 행동의 적절성에 따라 점수를 줘(-10~+15).
 
 반드시 아래 JSON 형식으로만 응답해:
@@ -361,7 +361,7 @@ export default function App() {
             </h1>
 
             <p className="text-base text-slate-500 font-bold leading-relaxed">
-              대환장구청에 오신 걸 환영합니다.<br />
+              서대문구청에 오신 걸 환영합니다.<br />
               <span className="text-slate-700 font-black">10명의 민원인</span>을 해결하고 <span className="text-blue-600 font-black">시장</span>이 되세요!
             </p>
           </div>
