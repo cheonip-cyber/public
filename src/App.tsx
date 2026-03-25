@@ -620,14 +620,29 @@ export default function App() {
                 placeholder="자유롭게 생각을 적어보세요..."
                 className="w-full h-16 p-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold text-xs focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all resize-none"
               />
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                onClick={nextNPC}
-                className="mt-2 w-full bg-slate-900 text-white text-sm font-black py-3 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
-              >
-                다음 민원인 <ChevronRight className="w-4 h-4" />
-              </motion.button>
+              {/* 버튼 행: 패들렛 + 다음 민원인 */}
+              <div className="mt-2 flex gap-2">
+                {/* 패들렛 의견 게시 버튼 */}
+                <motion.a
+                  href={currentNPC.padletUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex-1 bg-yellow-400 border-2 border-slate-900 text-slate-900 text-xs font-black py-3 rounded-xl hover:bg-yellow-300 transition-colors flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_rgba(15,23,42,0.5)]"
+                >
+                  📌 패들렛에 의견 남기기
+                </motion.a>
+                {/* 다음 민원인 버튼 */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={nextNPC}
+                  className="flex-1 bg-slate-900 text-white text-xs font-black py-3 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  다음 민원인 <ChevronRight className="w-3.5 h-3.5" />
+                </motion.button>
+              </div>
             </div>
           </motion.div>
         )}
