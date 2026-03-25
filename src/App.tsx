@@ -26,6 +26,11 @@ const GEMINI_MODEL = "gemini-2.5-flash";
 const MAX_TURNS = 3;
 // Vite 표준 환경변수 (VITE_ 접두사) → Vercel/GitHub Actions 자동 연동
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+// Thinking 비활성화 + JSON 응답 설정 (속도 최적화)
+const GEMINI_CONFIG = {
+  thinkingConfig: { thinkingBudget: 0 }, // Thinking 비활성화 → 응답속도 대폭 향상
+  responseMimeType: "application/json" as const,
+};
 // ──────────────────────────────────────────────
 
 export default function App() {
@@ -36,6 +41,7 @@ export default function App() {
   const [seenNPCs, setSeenNPCs]         = useState<number[]>([]);
   const [messages, setMessages]         = useState<Message[]>([]);
   const [isLoading, setIsLoading]       = useState(false);
+  const [streamingText, setStreamingText] = useState(""); // 스트리밍 중 텍스트
   const [showPromotion, setShowPromotion] = useState(false);
   const [currentCards, setCurrentCards] = useState<ActionCard[]>([]);
   const [turnCount, setTurnCount]       = useState(0);
@@ -64,12 +70,13 @@ export default function App() {
     }
   }, [messages]);
 
-  // ── AI: 대화 시작 ────────────────────────────────────────
+  // ── AI: 대화 시작 (스트리밍) ──────────────────────────────
   const startConversation = useCallback(async () => {
     setIsLoading(true);
+    setStreamingText("");
     try {
       const ai = new GoogleGenAI({ apiKey: API_KEY! });
-      const res = await ai.models.generateContent({
+      const stream = await ai.models.generateContentStream({
         model: GEMINI_MODEL,
         contents: [{
           role: "user",
@@ -94,13 +101,24 @@ export default function App() {
 }`
           }]
         }],
-        config: { responseMimeType: "application/json" }
+        config: GEMINI_CONFIG,
       });
-      const data = JSON.parse(res.text || "{}");
+
+      // 스트리밍: 청크가 오는 즉시 화면에 표시
+      let fullText = "";
+      for await (const chunk of stream) {
+        const chunkText = chunk.text ?? "";
+        fullText += chunkText;
+        setStreamingText(fullText); // 글자 단위로 즉시 업데이트
+      }
+      setStreamingText("");
+
+      const data = JSON.parse(fullText || "{}");
       setMessages([{ role: 'npc', text: data.npc_line || "안녕하세요.", mood: data.npc_mood || "보통" }]);
       setCurrentCards(data.next_cards || []);
     } catch (e) {
       console.error("Gemini Error:", e);
+      setStreamingText("");
       setMessages([{ role: 'npc', text: `저 ${currentNPC.name}인데요, 민원이 있어서요.`, mood: "보통" }]);
       setCurrentCards([
         { label: "규정을 안내한다", type: "rule" },
@@ -120,16 +138,17 @@ export default function App() {
     }
   }, [currentNPCIdx, gameState, messages.length, startConversation]);
 
-  // ── AI: 카드 선택 처리 ───────────────────────────────────
+  // ── AI: 카드 선택 처리 (스트리밍) ───────────────────────────
   const handleCardSelect = async (card: ActionCard) => {
     if (isLoading) return;
     setIsLoading(true);
+    setStreamingText("");
     setMessages(prev => [...prev, { role: 'user', text: card.label }]);
     setCurrentCards([]);
 
     try {
       const ai = new GoogleGenAI({ apiKey: API_KEY! });
-      const res = await ai.models.generateContent({
+      const stream = await ai.models.generateContentStream({
         model: GEMINI_MODEL,
         contents: [{
           role: "user",
@@ -145,7 +164,7 @@ export default function App() {
 {
   "npc_line": "민원인의 반응 대사 (한국어, 개성 있게)",
   "npc_mood": "현재 기분 (한 단어)",
-  "feedback": "민원인 속마음 피드백 한 문장 (예: '진심이 느껴져서 조금 마음이 풀렸어요.')",
+  "feedback": "민원인 속마음 피드백 한 문장",
   "points": 10,
   "next_cards": [
     {"label": "행동1 (10자 이내)", "type": "persuade"},
@@ -156,10 +175,19 @@ export default function App() {
 }`
           }]
         }],
-        config: { responseMimeType: "application/json" }
+        config: GEMINI_CONFIG,
       });
 
-      const data = JSON.parse(res.text || "{}");
+      // 스트리밍: 청크가 오는 즉시 대화창에 타이핑 효과로 표시
+      let fullText = "";
+      for await (const chunk of stream) {
+        const chunkText = chunk.text ?? "";
+        fullText += chunkText;
+        setStreamingText(fullText);
+      }
+      setStreamingText("");
+
+      const data = JSON.parse(fullText || "{}");
       const nextTurn = turnCount + 1;
       setTurnCount(nextTurn);
 
@@ -189,6 +217,7 @@ export default function App() {
       }
     } catch (e) {
       console.error("Gemini Error:", e);
+      setStreamingText("");
       setMessages(prev => [...prev, { role: 'npc', text: "잠시 통신이 안 되네요..." }]);
     } finally {
       setIsLoading(false);
@@ -550,14 +579,32 @@ export default function App() {
               </motion.div>
             ))}
 
-            {/* 로딩 인디케이터 */}
-            {isLoading && messages.length === 0 && (
+            {/* 스트리밍 중 타이핑 효과 말풍선 */}
+            {isLoading && streamingText && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-start"
+              >
+                <div className="max-w-[90%] px-3 py-2 rounded-xl border-2 border-blue-300 bg-blue-50 text-slate-900 text-xs md:text-sm font-bold leading-snug">
+                  {/* JSON에서 npc_line 값만 실시간 추출해서 표시 */}
+                  {(() => {
+                    const match = streamingText.match(/"npc_line"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                    return match ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : "...";
+                  })()}
+                  <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-blue-400 animate-pulse rounded-sm" />
+                </div>
+              </motion.div>
+            )}
+
+            {/* 로딩 인디케이터 (스트리밍 텍스트 없을 때만) */}
+            {isLoading && !streamingText && messages.length === 0 && (
               <div className="flex justify-center items-center h-full gap-2">
                 <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
                 <span className="text-slate-400 text-xs font-bold">민원인 등장 중...</span>
               </div>
             )}
-            {isLoading && messages.length > 0 && (
+            {isLoading && !streamingText && messages.length > 0 && (
               <div className="flex justify-start">
                 <div className="bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
