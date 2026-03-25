@@ -682,36 +682,54 @@ export default function App() {
       <AnimatePresence>
         {showPromotion && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/92 backdrop-blur-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
           >
             <motion.div
-              initial={{ scale: 0.5, rotate: 8 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               className="bg-white border-[8px] border-slate-900 rounded-[36px] p-8 max-w-sm w-full text-center space-y-6 shadow-[20px_20px_0px_rgba(37,99,235,1)]"
             >
               <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 0.8, repeat: 2 }}
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.15, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
               >
                 <Award className="w-20 h-20 text-blue-600 mx-auto drop-shadow-[0_6px_0px_rgba(15,23,42,1)]" />
               </motion.div>
-              <div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.25, duration: 0.3 }}
+              >
                 <p className="text-blue-600 font-black text-xs uppercase tracking-[0.4em] mb-1">★ Promotion ★</p>
                 <h2 className="text-3xl font-black text-slate-900">승진 축하!</h2>
-              </div>
-              <div className="bg-slate-50 p-5 rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_rgba(15,23,42,1)]">
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32, duration: 0.3 }}
+                className="bg-slate-50 p-5 rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_rgba(15,23,42,1)]"
+              >
                 <p className="text-slate-400 text-xs font-black uppercase mb-1">New Rank</p>
                 <p className="text-2xl font-black text-slate-900">{RANKS[rankIdx]}</p>
-              </div>
-              <button
+              </motion.div>
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.25 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setShowPromotion(false)}
-                className="w-full bg-slate-900 text-white text-base font-black py-4 rounded-2xl hover:bg-blue-600 transition-all shadow-xl"
+                className="w-full bg-slate-900 text-white text-base font-black py-4 rounded-2xl hover:bg-blue-600 transition-colors shadow-xl"
               >
                 업무 복귀!! (GO!!)
-              </button>
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
@@ -721,24 +739,47 @@ export default function App() {
       <AnimatePresence>
         {feedback && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={handleFeedbackClose}
-            className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm cursor-pointer"
           >
             <motion.div
-              initial={{ scale: 0.85, y: 16 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.85, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              initial={{ opacity: 0, y: 30, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.97 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              onClick={e => e.stopPropagation()}
               className="bg-white border-4 border-slate-900 rounded-3xl p-7 max-w-sm w-full text-center shadow-[12px_12px_0px_rgba(15,23,42,1)] relative"
             >
-              <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-yellow-400 border-4 border-slate-900 px-5 py-1 rounded-xl shadow transform -rotate-1 whitespace-nowrap">
+              {/* 뱃지 - 카드보다 살짝 늦게 등장 */}
+              <motion.div
+                initial={{ opacity: 0, y: -8, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.12, duration: 0.25, ease: "easeOut" }}
+                className="absolute -top-5 left-1/2 -translate-x-1/2 bg-yellow-400 border-4 border-slate-900 px-5 py-1 rounded-xl shadow transform -rotate-1 whitespace-nowrap"
+              >
                 <span className="text-slate-900 font-black text-xs uppercase">💭 민원인 속마음</span>
-              </div>
-              <p className="text-base md:text-lg font-black text-slate-900 leading-snug mt-3">
+              </motion.div>
+              {/* 텍스트 - 페이드인으로 부드럽게 */}
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-base md:text-lg font-black text-slate-900 leading-snug mt-3"
+              >
                 "{feedback}"
-              </p>
-              <p className="mt-5 text-[11px] font-bold text-slate-400 animate-pulse">탭하여 닫기</p>
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.35, duration: 0.3 }}
+                className="mt-5 text-[11px] font-bold text-slate-400"
+              >
+                탭하여 닫기
+              </motion.p>
             </motion.div>
           </motion.div>
         )}
@@ -748,17 +789,25 @@ export default function App() {
       <AnimatePresence>
         {showReflection && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/92 backdrop-blur-xl"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 24 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 280, damping: 22 }}
+              initial={{ opacity: 0, y: 40, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
               className="bg-white border-[6px] border-slate-900 rounded-[32px] p-7 max-w-sm w-full space-y-5 shadow-[14px_14px_0px_rgba(37,99,235,1)]"
             >
-              <div className="text-center space-y-2">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.12, duration: 0.3 }}
+                className="text-center space-y-2"
+              >
                 <div className="inline-block bg-blue-600 text-white px-4 py-1 rounded-xl font-black text-xs uppercase tracking-widest">
                   Reflection Time ✨
                 </div>
@@ -767,9 +816,12 @@ export default function App() {
                   <span className="text-blue-600 font-black">'{currentNPC.name}'</span> 유형의 민원인에게<br />
                   더 효과적으로 응대하려면 어떻게 해야 할까요?
                 </p>
-              </div>
+              </motion.div>
 
-              <textarea
+              <motion.textarea
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
                 value={reflectionInput}
                 onChange={e => setReflectionInput(e.target.value)}
                 placeholder="자유롭게 생각을 적어보세요..."
@@ -777,10 +829,13 @@ export default function App() {
               />
 
               <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.28, duration: 0.25 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={nextNPC}
-                className="w-full bg-slate-900 text-white text-base font-black py-4 rounded-2xl hover:bg-blue-600 transition-all shadow-xl flex items-center justify-center gap-2"
+                className="w-full bg-slate-900 text-white text-base font-black py-4 rounded-2xl hover:bg-blue-600 transition-colors shadow-xl flex items-center justify-center gap-2"
               >
                 다음 민원인 <ChevronRight className="w-5 h-5" />
               </motion.button>
