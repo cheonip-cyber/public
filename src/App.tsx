@@ -553,63 +553,85 @@ export default function App() {
             ref={scrollRef}
             className="h-[90px] md:h-[112px] overflow-y-auto flex flex-col gap-2 scrollbar-hide"
           >
-            {messages.slice(-3).map((msg, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[90%] px-3 py-2 rounded-xl border-2 border-slate-900 text-xs md:text-sm font-bold leading-snug
-                  ${msg.role === 'user'
-                    ? 'bg-blue-100 text-blue-900'
-                    : 'bg-slate-50 text-slate-900'
-                  }`}
+            {messages.slice(-3).map((msg, idx, arr) => {
+              // key를 전체 messages 배열 기준 고유 인덱스로 계산 → slice 후에도 key 불변
+              const globalIdx = messages.length - arr.length + idx;
+              return (
+                <motion.div
+                  key={globalIdx}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  {msg.role === 'user' && (
-                    <span className="text-blue-500 font-black mr-1">나신입:</span>
-                  )}
-                  {msg.text}
-                  {typeof msg.point === 'number' && msg.point !== 0 && (
-                    <span className={`ml-1.5 text-[10px] font-black ${msg.point > 0 ? 'text-green-600' : 'text-red-500'}`}>
-                      {msg.point > 0 ? `+${msg.point}` : msg.point}pt
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                  <div className={`max-w-[90%] px-3 py-2 rounded-xl border-2 border-slate-900 text-xs md:text-sm font-bold leading-snug
+                    ${msg.role === 'user'
+                      ? 'bg-blue-100 text-blue-900'
+                      : 'bg-slate-50 text-slate-900'
+                    }`}
+                  >
+                    {msg.role === 'user' && (
+                      <span className="text-blue-500 font-black mr-1">나신입:</span>
+                    )}
+                    {msg.text}
+                    {typeof msg.point === 'number' && msg.point !== 0 && (
+                      <span className={`ml-1.5 text-[10px] font-black ${msg.point > 0 ? 'text-green-600' : 'text-red-500'}`}>
+                        {msg.point > 0 ? `+${msg.point}` : msg.point}pt
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
 
-            {/* 스트리밍 중 타이핑 효과 말풍선 */}
-            {isLoading && streamingText && (
-              <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex justify-start"
-              >
-                <div className="max-w-[90%] px-3 py-2 rounded-xl border-2 border-blue-300 bg-blue-50 text-slate-900 text-xs md:text-sm font-bold leading-snug">
-                  {/* JSON에서 npc_line 값만 실시간 추출해서 표시 */}
-                  {(() => {
-                    const match = streamingText.match(/"npc_line"\s*:\s*"((?:[^"\\]|\\.)*)"/);
-                    return match ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : "...";
-                  })()}
-                  <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-blue-400 animate-pulse rounded-sm" />
-                </div>
-              </motion.div>
-            )}
+            {/* 스트리밍 말풍선: AnimatePresence로 등장/퇴장 부드럽게 처리
+                한 번 마운트된 후 텍스트만 업데이트 → 중간에 튀는 현상 제거 */}
+            <AnimatePresence>
+              {isLoading && (
+                <motion.div
+                  key="streaming-bubble"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex justify-start"
+                >
+                  <div className="max-w-[90%] px-3 py-2 rounded-xl border-2 border-blue-300 bg-blue-50 text-slate-900 text-xs md:text-sm font-bold leading-snug min-h-[32px]">
+                    {streamingText ? (
+                      <>
+                        {/* JSON 스트리밍 중 npc_line 부분만 추출해서 표시 */}
+                        {(() => {
+                          const match = streamingText.match(/"npc_line"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+                          const text = match
+                            ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"')
+                            : null;
+                          // npc_line이 아직 파싱 안 됐으면 "..." 표시
+                          return text || "...";
+                        })()}
+                        <span className="inline-block w-1 h-3 ml-0.5 bg-blue-400 animate-pulse rounded-sm align-middle" />
+                      </>
+                    ) : (
+                      /* 스트리밍 시작 전: 점 3개 로딩 */
+                      <span className="flex items-center gap-1">
+                        {[0, 1, 2].map(i => (
+                          <span
+                            key={i}
+                            className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-bounce"
+                            style={{ animationDelay: `${i * 0.15}s` }}
+                          />
+                        ))}
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* 로딩 인디케이터 (스트리밍 텍스트 없을 때만) */}
+            {/* 초기 등장 로딩 (메시지 0개 + 스트리밍 없을 때) */}
             {isLoading && !streamingText && messages.length === 0 && (
               <div className="flex justify-center items-center h-full gap-2">
                 <Loader2 className="w-5 h-5 animate-spin text-slate-300" />
                 <span className="text-slate-400 text-xs font-bold">민원인 등장 중...</span>
-              </div>
-            )}
-            {isLoading && !streamingText && messages.length > 0 && (
-              <div className="flex justify-start">
-                <div className="bg-slate-100 border-2 border-slate-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />
-                  <span className="text-xs text-slate-400 font-bold">생각 중...</span>
-                </div>
               </div>
             )}
           </div>
