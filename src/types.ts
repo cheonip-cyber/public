@@ -13,7 +13,6 @@ export interface NPC {
   bg: "counter" | "parking" | "pantry";
   avatar: string;
   imageUrl: string;
-  padletUrl: string; // 캐릭터별 패들렛 의견 게시판 링크
 }
 
 export interface Message {
