@@ -41,7 +41,7 @@ export default function App() {
   const [seenNPCs, setSeenNPCs]         = useState<number[]>([]);
   const [messages, setMessages]         = useState<Message[]>([]);
   const [isLoading, setIsLoading]       = useState(false);
-  const [streamingText, setStreamingText] = useState(""); // 스트리밍 중 텍스트
+  const [streamingText, setStreamingText] = useState("");
   const [showPromotion, setShowPromotion] = useState(false);
   const [currentCards, setCurrentCards] = useState<ActionCard[]>([]);
   const [turnCount, setTurnCount]       = useState(0);
@@ -49,6 +49,10 @@ export default function App() {
   const [showReflection, setShowReflection] = useState(false);
   const [reflectionInput, setReflectionInput] = useState("");
   const [imgError, setImgError]         = useState<Record<number, boolean>>({});
+  // 피드백 토스트 (모달 대신 인라인 토스트)
+  const [toastVisible, setToastVisible] = useState(false);
+  // 승진 배너 (모달 대신 상단 배너)
+  const [promotionBanner, setPromotionBanner] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -204,11 +208,14 @@ export default function App() {
       }]);
 
       setFeedback(data.feedback || null);
+      if (data.feedback) setToastVisible(true);
 
-      // 승진 체크
+      // 승진 체크 - 배너로 표시
       if (rankIdx < RANKS.length - 1 && newPoints >= RANK_THRESHOLDS[rankIdx + 1]) {
         setRankIdx(r => r + 1);
         setShowPromotion(true);
+        setPromotionBanner(true);
+        setTimeout(() => setPromotionBanner(false), 3500);
       }
 
       // MAX_TURNS 미만이면 다음 카드 노출
@@ -235,6 +242,7 @@ export default function App() {
       setCurrentCards([]);
       setTurnCount(0);
       setFeedback(null);
+      setToastVisible(false);
       setShowReflection(false);
       setReflectionInput("");
       setImgError({});
@@ -244,8 +252,11 @@ export default function App() {
   };
 
   const handleFeedbackClose = () => {
-    setFeedback(null);
-    if (turnCount >= MAX_TURNS) setShowReflection(true);
+    setToastVisible(false);
+    setTimeout(() => {
+      setFeedback(null);
+      if (turnCount >= MAX_TURNS) setShowReflection(true);
+    }, 300);
   };
 
   // ── 카드 스타일 ──────────────────────────────────────────
@@ -275,7 +286,7 @@ export default function App() {
     && currentCards.length === 0
     && messages.length > 0
     && turnCount >= MAX_TURNS
-    && !feedback
+    && !toastVisible
     && !showReflection;
 
   // ════════════════════════════════════════════
@@ -454,6 +465,28 @@ export default function App() {
         </motion.div>
       </AnimatePresence>
 
+      {/* ── 승진 배너 (상단 슬라이드다운) ── */}
+      <AnimatePresence>
+        {promotionBanner && (
+          <motion.div
+            initial={{ y: -80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -80, opacity: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute top-0 left-0 right-0 z-[50] flex justify-center pt-2 px-4 pointer-events-none"
+          >
+            <div className="flex items-center gap-3 bg-blue-600 border-2 border-slate-900 px-5 py-2.5 rounded-2xl shadow-[0_8px_0px_rgba(15,23,42,0.6)]">
+              <Award className="w-5 h-5 text-white shrink-0" />
+              <div>
+                <p className="text-white font-black text-xs uppercase tracking-widest leading-none">승진!</p>
+                <p className="text-blue-200 font-black text-sm leading-tight">{RANKS[rankIdx]}</p>
+              </div>
+              <span className="text-2xl">🎉</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── HUD 상단 ── */}
       <div className="relative z-20 flex items-center justify-between px-3 pt-3 pb-0 safe-top">
         {/* 계급 + 점수 */}
@@ -538,6 +571,67 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* ── 피드백 토스트 (대화창 위 슬라이드업) ── */}
+      <AnimatePresence>
+        {feedback && toastVisible && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-20 px-2 md:px-6 mb-1"
+          >
+            <div
+              onClick={handleFeedbackClose}
+              className="w-full max-w-2xl mx-auto bg-yellow-400 border-2 border-slate-900 rounded-2xl px-4 py-3 flex items-start gap-3 shadow-[0_4px_0px_rgba(15,23,42,0.5)] cursor-pointer"
+            >
+              <span className="text-lg shrink-0">💭</span>
+              <p className="text-slate-900 font-black text-xs md:text-sm leading-snug flex-1">
+                {feedback}
+              </p>
+              <span className="text-slate-600 text-[10px] font-bold shrink-0 self-end">탭하여 닫기</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── 회고 인라인 (모달 대신 대화창 위에 슬라이드업) ── */}
+      <AnimatePresence>
+        {showReflection && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-20 px-2 md:px-6 mb-1"
+          >
+            <div className="w-full max-w-2xl mx-auto bg-white border-2 border-slate-900 rounded-2xl p-4 shadow-[0_4px_0px_rgba(15,23,42,0.5)]">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-sm">✨</span>
+                <p className="text-slate-900 font-black text-xs uppercase tracking-widest">고민해보기</p>
+                <span className="ml-auto text-[10px] text-slate-400 font-bold">
+                  '{currentNPC.name}' 유형에 어떻게 응대할까요?
+                </span>
+              </div>
+              <textarea
+                value={reflectionInput}
+                onChange={e => setReflectionInput(e.target.value)}
+                placeholder="자유롭게 생각을 적어보세요..."
+                className="w-full h-16 p-2.5 bg-slate-50 border-2 border-slate-200 rounded-xl font-bold text-xs focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all resize-none"
+              />
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={nextNPC}
+                className="mt-2 w-full bg-slate-900 text-white text-sm font-black py-3 rounded-xl hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+              >
+                다음 민원인 <ChevronRight className="w-4 h-4" />
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── 대화창 + 카드 ── */}
       <div className="relative z-20 px-2 md:px-6 pb-3">
@@ -677,172 +771,6 @@ export default function App() {
           )}
         </div>
       </div>
-
-      {/* ════ 승진 모달 ════ */}
-      <AnimatePresence>
-        {showPromotion && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.97 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="bg-white border-[8px] border-slate-900 rounded-[36px] p-8 max-w-sm w-full text-center space-y-6 shadow-[20px_20px_0px_rgba(37,99,235,1)]"
-            >
-              <motion.div
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.15, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <Award className="w-20 h-20 text-blue-600 mx-auto drop-shadow-[0_6px_0px_rgba(15,23,42,1)]" />
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, duration: 0.3 }}
-              >
-                <p className="text-blue-600 font-black text-xs uppercase tracking-[0.4em] mb-1">★ Promotion ★</p>
-                <h2 className="text-3xl font-black text-slate-900">승진 축하!</h2>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.32, duration: 0.3 }}
-                className="bg-slate-50 p-5 rounded-2xl border-4 border-slate-900 shadow-[6px_6px_0px_rgba(15,23,42,1)]"
-              >
-                <p className="text-slate-400 text-xs font-black uppercase mb-1">New Rank</p>
-                <p className="text-2xl font-black text-slate-900">{RANKS[rankIdx]}</p>
-              </motion.div>
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.25 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setShowPromotion(false)}
-                className="w-full bg-slate-900 text-white text-base font-black py-4 rounded-2xl hover:bg-blue-600 transition-colors shadow-xl"
-              >
-                업무 복귀!! (GO!!)
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ════ 피드백 모달 ════ */}
-      <AnimatePresence>
-        {feedback && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            onClick={handleFeedbackClose}
-            className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm cursor-pointer"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 16, scale: 0.97 }}
-              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              onClick={e => e.stopPropagation()}
-              className="bg-white border-4 border-slate-900 rounded-3xl p-7 max-w-sm w-full text-center shadow-[12px_12px_0px_rgba(15,23,42,1)] relative"
-            >
-              {/* 뱃지 - 카드보다 살짝 늦게 등장 */}
-              <motion.div
-                initial={{ opacity: 0, y: -8, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: 0.12, duration: 0.25, ease: "easeOut" }}
-                className="absolute -top-5 left-1/2 -translate-x-1/2 bg-yellow-400 border-4 border-slate-900 px-5 py-1 rounded-xl shadow transform -rotate-1 whitespace-nowrap"
-              >
-                <span className="text-slate-900 font-black text-xs uppercase">💭 민원인 속마음</span>
-              </motion.div>
-              {/* 텍스트 - 페이드인으로 부드럽게 */}
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
-                className="text-base md:text-lg font-black text-slate-900 leading-snug mt-3"
-              >
-                "{feedback}"
-              </motion.p>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.35, duration: 0.3 }}
-                className="mt-5 text-[11px] font-bold text-slate-400"
-              >
-                탭하여 닫기
-              </motion.p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ════ 회고 모달 ════ */}
-      <AnimatePresence>
-        {showReflection && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 40, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.97 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="bg-white border-[6px] border-slate-900 rounded-[32px] p-7 max-w-sm w-full space-y-5 shadow-[14px_14px_0px_rgba(37,99,235,1)]"
-            >
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.12, duration: 0.3 }}
-                className="text-center space-y-2"
-              >
-                <div className="inline-block bg-blue-600 text-white px-4 py-1 rounded-xl font-black text-xs uppercase tracking-widest">
-                  Reflection Time ✨
-                </div>
-                <h2 className="text-xl font-black text-slate-900">💭 고민해보기</h2>
-                <p className="text-xs font-bold text-slate-500 leading-relaxed">
-                  <span className="text-blue-600 font-black">'{currentNPC.name}'</span> 유형의 민원인에게<br />
-                  더 효과적으로 응대하려면 어떻게 해야 할까요?
-                </p>
-              </motion.div>
-
-              <motion.textarea
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.3 }}
-                value={reflectionInput}
-                onChange={e => setReflectionInput(e.target.value)}
-                placeholder="자유롭게 생각을 적어보세요..."
-                className="w-full h-28 p-4 bg-slate-50 border-4 border-slate-900 rounded-2xl font-bold text-sm focus:outline-none focus:ring-4 focus:ring-blue-400 transition-all resize-none"
-              />
-
-              <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.28, duration: 0.25 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={nextNPC}
-                className="w-full bg-slate-900 text-white text-base font-black py-4 rounded-2xl hover:bg-blue-600 transition-colors shadow-xl flex items-center justify-center gap-2"
-              >
-                다음 민원인 <ChevronRight className="w-5 h-5" />
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
