@@ -24,8 +24,6 @@ import { RANKS, RANK_THRESHOLDS, CHARACTERS, BG_URLS } from './constants';
 // ──────────────────────────────────────────────
 const GEMINI_MODEL = "gemini-2.0-flash";
 const MAX_TURNS = 3;
-const PROTAGONIST_IMG =
-  "https://api.dicebear.com/7.x/avataaars/svg?seed=nasinib2025&backgroundColor=ffdfbf&top=shortHair&hairColor=black&accessories=prescription01&clotheType=BlazerShirt";
 // ──────────────────────────────────────────────
 
 export default function App() {
@@ -421,20 +419,19 @@ export default function App() {
         </div>
       </div>
 
-      {/* ── 캐릭터 패널 ── */}
-      <div className="relative z-10 flex-1 flex items-end justify-between px-2 md:px-10 pointer-events-none min-h-0">
-
-        {/* NPC (좌측) */}
+      {/* ── 캐릭터 패널 (민원인 중앙 단독) ── */}
+      <div className="relative z-10 flex-1 flex items-end justify-center px-4 md:px-16 pointer-events-none min-h-0">
         <AnimatePresence mode="wait">
           <motion.div
             key={`npc-${currentNPC.id}`}
-            initial={{ opacity: 0, x: -40, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: -40 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="relative h-[88%] w-[47%]"
+            initial={{ opacity: 0, y: 30, scale: 0.93 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 280, damping: 28 }}
+            className="relative h-[92%] w-full max-w-sm md:max-w-md"
           >
-            <div className="relative w-full h-full border-4 border-slate-900 bg-black/25 backdrop-blur-sm rounded-2xl overflow-hidden shadow-[10px_10px_0px_rgba(15,23,42,0.55)]">
+            <div className="relative w-full h-full border-4 border-slate-900 bg-black/20 backdrop-blur-sm rounded-3xl overflow-hidden shadow-[0_16px_0px_rgba(15,23,42,0.6)]">
+
               {/* 감정 뱃지 */}
               {lastNPCMsg?.mood && (
                 <motion.div
@@ -442,11 +439,16 @@ export default function App() {
                   initial={{ scale: 0, rotate: -20 }}
                   animate={{ scale: 1, rotate: -3 }}
                   transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                  className="absolute top-2 left-2 z-10 bg-yellow-400 border-2 border-slate-900 px-2 py-0.5 rounded-lg shadow text-slate-900 font-black text-[10px] uppercase whitespace-nowrap"
+                  className="absolute top-3 left-3 z-10 bg-yellow-400 border-2 border-slate-900 px-3 py-1 rounded-xl shadow-lg text-slate-900 font-black text-xs uppercase whitespace-nowrap"
                 >
                   {lastNPCMsg.mood}!!
                 </motion.div>
               )}
+
+              {/* 민원 유형 뱃지 (우측 상단) */}
+              <div className="absolute top-3 right-3 z-10 bg-slate-900/80 backdrop-blur border border-white/20 px-2.5 py-1 rounded-xl">
+                <span className="text-white/70 font-black text-[10px]">{currentNPC.avatar} {currentNPC.name}</span>
+              </div>
 
               {/* 캐릭터 이미지 */}
               {!imgError[currentNPC.id] ? (
@@ -458,28 +460,14 @@ export default function App() {
                   className="w-full h-full object-cover object-top"
                 />
               ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-slate-800/50">
-                  <span className="text-6xl md:text-8xl">{currentNPC.avatar}</span>
-                  <span className="text-white/50 text-xs font-bold">{currentNPC.name}</span>
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-slate-800/50">
+                  <span className="text-8xl">{currentNPC.avatar}</span>
+                  <span className="text-white/60 text-sm font-black">{currentNPC.name}</span>
                 </div>
               )}
             </div>
           </motion.div>
         </AnimatePresence>
-
-        {/* 주인공 (우측) */}
-        <div className="relative h-[76%] w-[47%]">
-          <div className="relative w-full h-full border-4 border-slate-900 bg-black/25 backdrop-blur-sm rounded-2xl overflow-hidden shadow-[-10px_10px_0px_rgba(15,23,42,0.55)]">
-            <img
-              src={PROTAGONIST_IMG}
-              alt="나신입"
-              className="w-full h-full object-contain object-bottom scale-x-[-1]"
-            />
-            <div className="absolute bottom-2 right-2 bg-slate-900/80 border border-white/20 px-2 py-0.5 rounded-lg">
-              <span className="text-white font-black text-[9px]">나신입</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* ── 대화창 + 카드 ── */}
