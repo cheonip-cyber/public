@@ -24,6 +24,8 @@ import { RANKS, RANK_THRESHOLDS, CHARACTERS, BG_URLS } from './constants';
 // ──────────────────────────────────────────────
 const GEMINI_MODEL = "gemini-2.0-flash";
 const MAX_TURNS = 3;
+// Vite 표준 환경변수 (VITE_ 접두사) → Vercel/GitHub Actions 자동 연동
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
 // ──────────────────────────────────────────────
 
 export default function App() {
@@ -66,7 +68,7 @@ export default function App() {
   const startConversation = useCallback(async () => {
     setIsLoading(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const ai = new GoogleGenAI({ apiKey: API_KEY! });
       const res = await ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: [{
@@ -126,7 +128,7 @@ export default function App() {
     setCurrentCards([]);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
+      const ai = new GoogleGenAI({ apiKey: API_KEY! });
       const res = await ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: [{
@@ -246,6 +248,44 @@ export default function App() {
     && turnCount >= MAX_TURNS
     && !feedback
     && !showReflection;
+
+  // ════════════════════════════════════════════
+  //  API KEY 없음 에러 화면
+  // ════════════════════════════════════════════
+  if (!API_KEY) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
+        <div className="bg-white border-[8px] border-red-500 rounded-[40px] p-8 max-w-md w-full text-center space-y-6 shadow-[16px_16px_0px_rgba(239,68,68,1)]">
+          <div className="text-6xl">⚠️</div>
+          <div className="space-y-2">
+            <h1 className="text-2xl font-black text-slate-900">API 키가 없습니다</h1>
+            <p className="text-sm text-slate-500 font-bold leading-relaxed">
+              <span className="text-red-500 font-black">VITE_GEMINI_API_KEY</span> 환경변수가<br />
+              설정되지 않았습니다.
+            </p>
+          </div>
+          <div className="bg-slate-50 border-4 border-slate-900 rounded-2xl p-5 text-left space-y-3">
+            <p className="text-xs font-black text-slate-700 uppercase tracking-widest">설정 방법</p>
+            <div className="space-y-2 text-xs font-bold text-slate-600">
+              <p>① <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" className="text-blue-600 underline">aistudio.google.com</a> 에서 API 키 발급</p>
+              <p>② Vercel 또는 GitHub 환경변수에 등록:</p>
+              <code className="block bg-slate-900 text-green-400 px-3 py-2 rounded-lg text-[11px]">
+                VITE_GEMINI_API_KEY = AIza...
+              </code>
+            </div>
+          </div>
+          <a
+            href="https://aistudio.google.com/app/apikey"
+            target="_blank"
+            rel="noreferrer"
+            className="block w-full py-4 bg-red-500 text-white font-black rounded-2xl hover:bg-red-600 transition-all"
+          >
+            API 키 발급받기 →
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   // ════════════════════════════════════════════
   //  INTRO

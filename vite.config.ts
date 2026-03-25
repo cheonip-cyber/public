@@ -8,7 +8,11 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+      // VITE_ 접두사: Vite 표준 방식 → Vercel/GitHub Actions 환경변수와 자동 연동
+      // import.meta.env.VITE_GEMINI_API_KEY 로 접근
+      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(
+        env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || ''
+      ),
     },
     resolve: {
       alias: {
