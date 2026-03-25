@@ -22,7 +22,7 @@ import { NPC, Message, GameState, ActionCard } from './types';
 import { RANKS, RANK_THRESHOLDS, CHARACTERS, BG_URLS } from './constants';
 
 // ──────────────────────────────────────────────
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = "gemini-2.5-flash-preview-04-17";
 const MAX_TURNS = 3;
 // Vite 표준 환경변수 (VITE_ 접두사) → Vercel/GitHub Actions 자동 연동
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
