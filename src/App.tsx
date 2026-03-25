@@ -259,6 +259,14 @@ export default function App() {
     }, 300);
   };
 
+  // 1·2번째 피드백은 2.5초 후 자동 닫힘 (3번째는 버튼으로만 닫힘)
+  useEffect(() => {
+    if (toastVisible && turnCount < MAX_TURNS) {
+      const timer = setTimeout(() => handleFeedbackClose(), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [toastVisible, turnCount]);
+
   // ── 카드 스타일 ──────────────────────────────────────────
   const cardIcon = (type: string) => {
     switch (type) {
@@ -590,13 +598,15 @@ export default function App() {
                   {feedback}
                 </p>
               </div>
-              {/* 다음 진행 버튼 - 하단 풀 너비로 눈에 잘 띄게 */}
-              <button
-                onClick={handleFeedbackClose}
-                className="w-full bg-slate-900 text-white font-black text-sm py-3 flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors active:scale-[0.99]"
-              >
-                다음 진행 <ChevronRight className="w-4 h-4" />
-              </button>
+              {/* 3번째 턴(마지막)에만 '다음 진행' 버튼 표시 */}
+              {turnCount >= MAX_TURNS && (
+                <button
+                  onClick={handleFeedbackClose}
+                  className="w-full bg-slate-900 text-white font-black text-sm py-3 flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors active:scale-[0.99]"
+                >
+                  다음 진행 <ChevronRight className="w-4 h-4" />
+                </button>
+              )}
             </div>
           </motion.div>
         )}
